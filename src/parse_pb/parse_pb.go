@@ -97,7 +97,7 @@ func (item PBVocab) String() string {
 } 
 
 type PBUnknown struct {
-	i byte
+	i int
 	c byte
 	data []byte
 }
@@ -120,14 +120,20 @@ func NewParser(reader io.Reader) (*Parser, error) {
 }
 
 func (parser *Parser) Step() (parseItem, error) {
-	var i byte
+	var b byte
+	var i int
 	var c byte
 	var err error
-	if i, err = parser.reader.ReadByte(); err != nil {
-		return nil, err
-	}
-	if c, err = parser.reader.ReadByte(); err != nil {
-		return nil, err
+	for {
+		if b, err = parser.reader.ReadByte(); err != nil {
+			return nil, err
+		}
+		if (b & HIGH_BIT_SET) != 0 {
+			c = b
+			break
+		}
+		i = i << 8
+		i += int(b)
 	}
 	switch c {
 	case PB_LIST:
@@ -142,9 +148,9 @@ func (parser *Parser) Step() (parseItem, error) {
 	return parser.parseUnknown(i, c)
 }
 
-func (parser *Parser) parseList(i byte, _ byte) (parseItem, error) {
-	size := int(i)
-	list := PBList{value : make([]parseItem, int(size))}
+func (parser *Parser) parseList(i int, _ byte) (parseItem, error) {
+	size := i
+	list := PBList{value : make([]parseItem, size)}
 	for j := 0; j < size; j++ {
 		value, err := parser.Step()
 		if err != nil {
@@ -156,12 +162,12 @@ func (parser *Parser) parseList(i byte, _ byte) (parseItem, error) {
 	return list, nil
 }
 
-func (parser *Parser) parseInt(i byte, _ byte) (parseItem, error) {
-	return PBInt{value : int(i)}, nil
+func (parser *Parser) parseInt(i int, _ byte) (parseItem, error) {
+	return PBInt{value : i}, nil
 }
 
-func (parser *Parser) parseString(i byte, _ byte) (parseItem, error) {
-	size := int(i)
+func (parser *Parser) parseString(i int, _ byte) (parseItem, error) {
+	size := i
 	buffer := make([]byte, size)
 	n, err := parser.reader.Read(buffer)
 	if err != nil {
@@ -174,12 +180,12 @@ func (parser *Parser) parseString(i byte, _ byte) (parseItem, error) {
 	return PBString{value : string(buffer)}, nil
 }
 
-func (parser *Parser) parseVocab(i byte, _ byte) (parseItem, error) {
-	return PBVocab{value : int(i)}, nil
+func (parser *Parser) parseVocab(i int, _ byte) (parseItem, error) {
+	return PBVocab{value : i}, nil
 }
 
-func (parser *Parser) parseUnknown(i byte, c byte) (parseItem, error) {
-	size := int(i)
+func (parser *Parser) parseUnknown(i int, c byte) (parseItem, error) {
+	size := i
 	buffer := make([]byte, size)
 	n, err := parser.reader.Read(buffer)
 	if err != nil {
@@ -191,7 +197,6 @@ func (parser *Parser) parseUnknown(i byte, c byte) (parseItem, error) {
 	}
 	return PBUnknown{i : i, c : c, data : buffer}, nil
 }
-
 
 // dumpByte dumps one byte
 func dumpByte(c byte) string {
