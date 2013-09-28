@@ -27,6 +27,10 @@ const (
 	HIGH_BIT_SET byte = 128
 )
 
+const (
+	marshalledFloatSize = 8
+)
+
 var (
 	pb_constants = map[byte]string{
 		128 : "PB_LIST",
@@ -73,11 +77,11 @@ func (item PBInt) Type() byte {
 }
 
 type PBString struct {
-	value string
+	value []byte
 }
 
 func (item PBString) String() string {
-	return fmt.Sprintf("PB_STRING(%s)", item.value)
+	return fmt.Sprintf("PB_STRING(%q)", item.value)
 } 
 
 func (item PBString) Type() byte {
@@ -167,11 +171,7 @@ func (parser *Parser) Step() (parseItem, error) {
 	case PB_NEG:
 		return parser.parseNeg(-unmarshallBase128Int(intBuffer), c)
 	case PB_FLOAT:
-		buffer := make([]byte, 8)
-		if _, err := parser.reader.Read(buffer); err != nil {
-			return nil, err
-		}
-		return parser.parseFloat(c, buffer)
+		return parser.parseFloat(c)
 	case PB_VOCAB:
 		return parser.parseVocab(unmarshallBase128Int(intBuffer), c)
 	}
@@ -197,25 +197,23 @@ func (parser *Parser) parseInt(i int, _ byte) (parseItem, error) {
 }
 
 func (parser *Parser) parseString(i int, _ byte) (parseItem, error) {
-	size := i
-	buffer := make([]byte, size)
-	n, err := parser.reader.Read(buffer)
+	data, err := parser.readAll(i)
 	if err != nil {
 		return nil, err
 	}
-	if n != size {
-		return nil, 
-			fmt.Errorf("parserString read %d bytes expecting %d", n, size)
-	}
-	return PBString{value : string(buffer)}, nil
+	return PBString{value : data}, nil
 }
 
 func (parser *Parser) parseNeg(i int, _ byte) (parseItem, error) {
 	return PBNeg{value : i}, nil
 }
 
-func (parser *Parser) parseFloat(_ byte, _ []byte) (parseItem, error) {
-	return PBFloat{value : 0.9}, nil
+func (parser *Parser) parseFloat(_ byte) (parseItem, error) {
+	_, err := parser.readAll(marshalledFloatSize)
+	if err != nil {
+		return nil, err
+	}
+	return PBFloat{value : 0.0}, nil
 }
 
 func (parser *Parser) parseVocab(i int, _ byte) (parseItem, error) {
@@ -235,3 +233,21 @@ func dumpByte(c byte) string {
 	}
 	return fmt.Sprintf("%d", c)
 }
+
+// readAll reads all the bytes needed to fill and array
+func (parser *Parser) readAll(size int) ([]byte, error) {
+	buffer := make([]byte, size)
+
+	offset := 0
+	bytesToRead := size
+	for bytesToRead > 0 {
+		n, err := parser.reader.Read(buffer[offset:offset+bytesToRead])
+		if err != nil {
+			return nil, err
+		}
+		offset = offset + n
+		bytesToRead = bytesToRead - n
+	}
+
+	return buffer, nil
+} 
