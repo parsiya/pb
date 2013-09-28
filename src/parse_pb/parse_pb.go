@@ -84,6 +84,30 @@ func (item PBString) Type() byte {
 	return PB_STRING
 }
 
+type PBNeg struct {
+	value int
+}
+
+func (item PBNeg) String() string {
+	return fmt.Sprintf("PB_NEG(%d)", item.value)
+} 
+
+func (item PBNeg) Type() byte {
+	return PB_NEG
+}
+
+type PBFloat struct {
+	value float64
+}
+
+func (item PBFloat) String() string {
+	return fmt.Sprintf("PB_FLOAT(%f)", item.value)
+} 
+
+func (item PBFloat) Type() byte {
+	return PB_FLOAT
+}
+
 type PBVocab struct {
 	value int
 }
@@ -97,13 +121,12 @@ func (item PBVocab) String() string {
 } 
 
 type PBUnknown struct {
-	i int
+	intBuffer []byte
 	c byte
-	data []byte
 }
 
 func (item PBUnknown) String() string {
-	return fmt.Sprintf("* %d %s %X *", item.i, dumpByte(item.c), item.data)
+	return fmt.Sprintf("* %v %s *", item.intBuffer, dumpByte(item.c))
 }
 
 func (item PBUnknown) Type() byte {
@@ -121,7 +144,7 @@ func NewParser(reader io.Reader) (*Parser, error) {
 
 func (parser *Parser) Step() (parseItem, error) {
 	var b byte
-	var i int
+	var intBuffer []byte
 	var c byte
 	var err error
 	for {
@@ -132,20 +155,27 @@ func (parser *Parser) Step() (parseItem, error) {
 			c = b
 			break
 		}
-		i = i << 8
-		i += int(b)
+		intBuffer = append(intBuffer, b)
 	}
 	switch c {
 	case PB_LIST:
-		return parser.parseList(i, c)
+		return parser.parseList(parseBase128Int(intBuffer), c)
 	case PB_INT:
-		return parser.parseInt(i, c)
+		return parser.parseInt(parseBase128Int(intBuffer), c)
 	case PB_STRING:
-		return parser.parseString(i, c)
+		return parser.parseString(parseBase128Int(intBuffer), c)
+	case PB_NEG:
+		return parser.parseNeg(-parseBase128Int(intBuffer), c)
+	case PB_FLOAT:
+		buffer := make([]byte, 8)
+		if _, err := parser.reader.Read(buffer); err != nil {
+			return nil, err
+		}
+		return parser.parseFloat(c, buffer)
 	case PB_VOCAB:
-		return parser.parseVocab(i, c)
+		return parser.parseVocab(parseBase128Int(intBuffer), c)
 	}
-	return parser.parseUnknown(i, c)
+	return parser.parseUnknown(intBuffer, c)
 }
 
 func (parser *Parser) parseList(i int, _ byte) (parseItem, error) {
@@ -180,22 +210,21 @@ func (parser *Parser) parseString(i int, _ byte) (parseItem, error) {
 	return PBString{value : string(buffer)}, nil
 }
 
+func (parser *Parser) parseNeg(i int, _ byte) (parseItem, error) {
+	return PBNeg{value : i}, nil
+}
+
+func (parser *Parser) parseFloat(_ byte, _ []byte) (parseItem, error) {
+	return PBFloat{value : 0.9}, nil
+}
+
 func (parser *Parser) parseVocab(i int, _ byte) (parseItem, error) {
 	return PBVocab{value : i}, nil
 }
 
-func (parser *Parser) parseUnknown(i int, c byte) (parseItem, error) {
-	size := i
-	buffer := make([]byte, size)
-	n, err := parser.reader.Read(buffer)
-	if err != nil {
-		return nil, err
-	}
-	if n != size {
-		return nil, 
-			fmt.Errorf("parseUnknown read %d bytes expecting %d", n, size)
-	}
-	return PBUnknown{i : i, c : c, data : buffer}, nil
+func (parser *Parser) parseUnknown(intBuffer []byte, c byte) (
+	parseItem, error) {
+	return PBUnknown{intBuffer : intBuffer, c : c}, nil
 }
 
 // dumpByte dumps one byte
