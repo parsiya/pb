@@ -6,6 +6,7 @@
 package parse_pb
 
 import (
+   "bytes"
    "testing"
 )
 
@@ -42,13 +43,28 @@ var (
         testItem{732654087, []byte{7, 84, 45, 93, 2}}}
 )
 
-func TestParseInt(t *testing.T) {
+func TestMarshallInt(t *testing.T) {
 
-	for _, testItem := range testItems {
-		result := parseBase128Int(testItem.MarshalledInt)
+	for n, testItem := range testItems {
+		result, err := marshallBase128Int(testItem.Number)
+		if err != nil {
+			t.Errorf("#%d error marshallBase128Int(%v) %s", 
+				n+1, testItem.Number, err)
+		}
+		if bytes.Compare(result, testItem.MarshalledInt) != 0 {
+			t.Errorf("#%d parse_base_128_int(%v) = %v, want %v", 
+				n+1, testItem.Number, result, testItem.MarshalledInt)
+		}
+	}
+}
+
+func TestUnmarshallInt(t *testing.T) {
+
+	for n, testItem := range testItems {
+		result := unmarshallBase128Int(testItem.MarshalledInt)
 		if result != testItem.Number {
-			t.Errorf("parse_base_128_int(%v) = %v, want %v", 
-				testItem.MarshalledInt, result, testItem.Number)
+			t.Errorf("#%d unmarshallBase128Int(%v) = %v, want %v", 
+				n+1, testItem.MarshalledInt, result, testItem.Number)
 		}
 	}
 }

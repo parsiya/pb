@@ -159,13 +159,13 @@ func (parser *Parser) Step() (parseItem, error) {
 	}
 	switch c {
 	case PB_LIST:
-		return parser.parseList(parseBase128Int(intBuffer), c)
+		return parser.parseList(unmarshallBase128Int(intBuffer), c)
 	case PB_INT:
-		return parser.parseInt(parseBase128Int(intBuffer), c)
+		return parser.parseInt(unmarshallBase128Int(intBuffer), c)
 	case PB_STRING:
-		return parser.parseString(parseBase128Int(intBuffer), c)
+		return parser.parseString(unmarshallBase128Int(intBuffer), c)
 	case PB_NEG:
-		return parser.parseNeg(-parseBase128Int(intBuffer), c)
+		return parser.parseNeg(-unmarshallBase128Int(intBuffer), c)
 	case PB_FLOAT:
 		buffer := make([]byte, 8)
 		if _, err := parser.reader.Read(buffer); err != nil {
@@ -173,7 +173,7 @@ func (parser *Parser) Step() (parseItem, error) {
 		}
 		return parser.parseFloat(c, buffer)
 	case PB_VOCAB:
-		return parser.parseVocab(parseBase128Int(intBuffer), c)
+		return parser.parseVocab(unmarshallBase128Int(intBuffer), c)
 	}
 	return parser.parseUnknown(intBuffer, c)
 }
