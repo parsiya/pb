@@ -10,9 +10,9 @@ look at banana.py line 150 (dataReceived).  define same constants.
 */
 import (
 	"bufio"
-   	"fmt"
-   	"io"
-   	"strings"
+	"fmt"
+	"io"
+	"strings"
 )
 
 const (
@@ -29,14 +29,14 @@ const (
 
 var (
 	pb_constants = map[byte]string{
-		128 : "PB_LIST",
-		129 : "PB_INT",
-		130 : "PB_STRING",
-		131 : "PB_NEG",
-		132 : "PB_FLOAT",
-		133 : "PB_LONGINT",
-		134 : "PB_LONGNEG",
-		135 : "PB_VOCAB"}
+		PB_LIST:    "PB_LIST",
+		PB_INT:     "PB_INT",
+		PB_STRING:  "PB_STRING",
+		PB_NEG:     "PB_NEG",
+		PB_FLOAT:   "PB_FLOAT",
+		PB_LONGINT: "PB_LONGINT",
+		PB_LONGNEG: "PB_LONGNEG",
+		PB_VOCAB:   "PB_VOCAB"}
 )
 
 type parseItem interface {
@@ -53,12 +53,12 @@ func (item PBList) Type() byte {
 }
 
 func (item PBList) String() string {
-	var printValues []string 
+	var printValues []string
 	for _, x := range item.value {
-		printValues = append(printValues, x.String()) 
+		printValues = append(printValues, x.String())
 	}
 	return fmt.Sprintf("PB_LIST(%s)", strings.Join(printValues, ","))
-} 
+}
 
 type PBInt struct {
 	value int
@@ -66,7 +66,7 @@ type PBInt struct {
 
 func (item PBInt) String() string {
 	return fmt.Sprintf("PB_INT(%d)", item.value)
-} 
+}
 
 func (item PBInt) Type() byte {
 	return PB_INT
@@ -78,7 +78,7 @@ type PBString struct {
 
 func (item PBString) String() string {
 	return fmt.Sprintf("PB_STRING(%q)", item.value)
-} 
+}
 
 func (item PBString) Type() byte {
 	return PB_STRING
@@ -90,7 +90,7 @@ type PBNeg struct {
 
 func (item PBNeg) String() string {
 	return fmt.Sprintf("PB_NEG(%d)", item.value)
-} 
+}
 
 func (item PBNeg) Type() byte {
 	return PB_NEG
@@ -102,7 +102,7 @@ type PBFloat struct {
 
 func (item PBFloat) String() string {
 	return fmt.Sprintf("PB_FLOAT(%f)", item.value)
-} 
+}
 
 func (item PBFloat) Type() byte {
 	return PB_FLOAT
@@ -117,12 +117,16 @@ func (item PBVocab) Type() byte {
 }
 
 func (item PBVocab) String() string {
-	return fmt.Sprintf("PB_VOCAB(%d)", item.value)
-} 
+	name, ok := pb_vocabulary[item.value]
+	if !ok {
+		return fmt.Sprintf("PB_VOCAB(%d)", item.value)
+	}
+	return fmt.Sprintf("PB_VOCAB(%s)", name)
+}
 
 type PBUnknown struct {
 	intBuffer []byte
-	c byte
+	c         byte
 }
 
 func (item PBUnknown) String() string {
@@ -138,7 +142,7 @@ type Parser struct {
 }
 
 func NewParser(reader io.Reader) (*Parser, error) {
-	parser := Parser{reader : bufio.NewReader(reader)}
+	parser := Parser{reader: bufio.NewReader(reader)}
 	return &parser, nil
 }
 
@@ -176,20 +180,20 @@ func (parser *Parser) Step() (parseItem, error) {
 
 func (parser *Parser) parseList(i int, _ byte) (parseItem, error) {
 	size := i
-	list := PBList{value : make([]parseItem, size)}
+	list := PBList{value: make([]parseItem, size)}
 	for j := 0; j < size; j++ {
 		value, err := parser.Step()
 		if err != nil {
 			return nil, err
 		}
-		list.value[j] = value 
+		list.value[j] = value
 	}
 
 	return list, nil
 }
 
 func (parser *Parser) parseInt(i int, _ byte) (parseItem, error) {
-	return PBInt{value : i}, nil
+	return PBInt{value: i}, nil
 }
 
 func (parser *Parser) parseString(i int, _ byte) (parseItem, error) {
@@ -197,11 +201,11 @@ func (parser *Parser) parseString(i int, _ byte) (parseItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	return PBString{value : data}, nil
+	return PBString{value: data}, nil
 }
 
 func (parser *Parser) parseNeg(i int, _ byte) (parseItem, error) {
-	return PBNeg{value : i}, nil
+	return PBNeg{value: i}, nil
 }
 
 func (parser *Parser) parseFloat(_ byte) (parseItem, error) {
@@ -209,16 +213,16 @@ func (parser *Parser) parseFloat(_ byte) (parseItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	return PBFloat{value : unmarshallPackedFloat(marshalledFloat)}, nil
+	return PBFloat{value: unmarshallPackedFloat(marshalledFloat)}, nil
 }
 
 func (parser *Parser) parseVocab(i int, _ byte) (parseItem, error) {
-	return PBVocab{value : i}, nil
+	return PBVocab{value: i}, nil
 }
 
 func (parser *Parser) parseUnknown(intBuffer []byte, c byte) (
 	parseItem, error) {
-	return PBUnknown{intBuffer : intBuffer, c : c}, nil
+	return PBUnknown{intBuffer: intBuffer, c: c}, nil
 }
 
 // dumpByte dumps one byte
@@ -237,7 +241,7 @@ func (parser *Parser) readAll(size int) ([]byte, error) {
 	offset := 0
 	bytesToRead := size
 	for bytesToRead > 0 {
-		n, err := parser.reader.Read(buffer[offset:offset+bytesToRead])
+		n, err := parser.reader.Read(buffer[offset : offset+bytesToRead])
 		if err != nil {
 			return nil, err
 		}
@@ -246,4 +250,4 @@ func (parser *Parser) readAll(size int) ([]byte, error) {
 	}
 
 	return buffer, nil
-} 
+}
