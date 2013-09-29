@@ -27,10 +27,6 @@ const (
 	HIGH_BIT_SET byte = 128
 )
 
-const (
-	marshalledFloatSize = 8
-)
-
 var (
 	pb_constants = map[byte]string{
 		128 : "PB_LIST",
@@ -209,11 +205,11 @@ func (parser *Parser) parseNeg(i int, _ byte) (parseItem, error) {
 }
 
 func (parser *Parser) parseFloat(_ byte) (parseItem, error) {
-	_, err := parser.readAll(marshalledFloatSize)
+	marshalledFloat, err := parser.readAll(PackedFloatSliceSize)
 	if err != nil {
 		return nil, err
 	}
-	return PBFloat{value : 0.0}, nil
+	return PBFloat{value : unmarshallPackedFloat(marshalledFloat)}, nil
 }
 
 func (parser *Parser) parseVocab(i int, _ byte) (parseItem, error) {

@@ -52,7 +52,7 @@ func TestMarshallInt(t *testing.T) {
 				n+1, testItem.Number, err)
 		}
 		if bytes.Compare(result, testItem.MarshalledInt) != 0 {
-			t.Errorf("#%d parse_base_128_int(%v) = %v, want %v", 
+			t.Errorf("#%d marshallBase128Int(%v) = %v, want %v", 
 				n+1, testItem.Number, result, testItem.MarshalledInt)
 		}
 	}

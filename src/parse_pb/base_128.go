@@ -27,8 +27,8 @@ func marshallBase128Int(number int) ([]byte, error) {
 	return result, nil
 }
 
-// unmarshallBase128Int converts a slice of bytes to and int
-// the bytes are assumed to form a respresentation of the number in base 128
+// unmarshallBase128Int converts a slice of bytes to an int
+// the bytes are assumed to form a representation of the number in base 128
 func unmarshallBase128Int(marshalledInt []byte) int {
 	var result int
 
