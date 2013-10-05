@@ -13,6 +13,10 @@ type PBVocab struct {
 	value int
 }
 
+func NewPBVocab(vocab int) PBVocab {
+	return PBVocab{value: vocab}
+}
+
 func (item PBVocab) Type() byte {
 	return PB_VOCAB
 }

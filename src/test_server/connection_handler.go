@@ -14,6 +14,12 @@ import (
    "net"
 )
 
+var (
+	pbString = parse_pb.NewPBString("pb")
+	noneString = parse_pb.NewPBString("none")
+	greeting = parse_pb.NewPBList(pbString, noneString)
+)
+
 func handleConnection(connection net.Conn) {
 	log.Printf("INFO: handleConnection %s", connection.RemoteAddr())
 	defer connection.Close()

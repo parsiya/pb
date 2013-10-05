@@ -13,6 +13,10 @@ type PBNeg struct {
 	value int
 }
 
+func NewPBNeg(value int) PBNeg {
+	return PBNeg{value: value}
+}
+
 func (item PBNeg) String() string {
 	return fmt.Sprintf("PB_NEG(%d)", item.value)
 }

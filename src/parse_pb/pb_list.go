@@ -13,6 +13,10 @@ type PBList struct {
 	value []parseItem
 }
 
+func NewPBList(items ...parseItem) PBList {
+	return PBList{value: items}
+}
+
 func (item PBList) Type() byte {
 	return PB_LIST
 }

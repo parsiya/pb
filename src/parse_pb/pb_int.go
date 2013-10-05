@@ -13,6 +13,10 @@ type PBInt struct {
 	value int
 }
 
+func NewPBInt(value int) PBInt {
+	return PBInt{value: value}
+}
+
 func (item PBInt) String() string {
 	return fmt.Sprintf("PB_INT(%d)", item.value)
 }

@@ -14,6 +14,10 @@ type PBUnknown struct {
 	c         byte
 }
 
+func NewPBUnknown(c byte, intBuffer []byte) PBUnknown {
+	return PBUnknown{intBuffer: intBuffer, c: c}
+}
+
 func (item PBUnknown) String() string {
 	return fmt.Sprintf("* %v %s *", item.intBuffer, dumpByte(item.c))
 }

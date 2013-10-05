@@ -13,6 +13,10 @@ type PBFloat struct {
 	value float64
 }
 
+func NewPBFloat(value float64) PBFloat {
+	return PBFloat{value: value}
+}
+
 func (item PBFloat) String() string {
 	return fmt.Sprintf("PB_FLOAT(%f)", item.value)
 }

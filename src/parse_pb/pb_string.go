@@ -13,6 +13,10 @@ type PBString struct {
 	value []byte
 }
 
+func NewPBString(data string) PBString {
+	return PBString{value: []byte(data)}
+}
+
 func (item PBString) String() string {
 	return fmt.Sprintf("PB_STRING(%q)", item.value)
 }
