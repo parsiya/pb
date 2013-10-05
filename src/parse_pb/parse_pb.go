@@ -12,7 +12,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strings"
 )
 
 const (
@@ -42,99 +41,6 @@ var (
 type parseItem interface {
 	Type() byte
 	String() string
-}
-
-type PBList struct {
-	value []parseItem
-}
-
-func (item PBList) Type() byte {
-	return PB_LIST
-}
-
-func (item PBList) String() string {
-	var printValues []string
-	for _, x := range item.value {
-		printValues = append(printValues, x.String())
-	}
-	return fmt.Sprintf("PB_LIST(%s)", strings.Join(printValues, ","))
-}
-
-type PBInt struct {
-	value int
-}
-
-func (item PBInt) String() string {
-	return fmt.Sprintf("PB_INT(%d)", item.value)
-}
-
-func (item PBInt) Type() byte {
-	return PB_INT
-}
-
-type PBString struct {
-	value []byte
-}
-
-func (item PBString) String() string {
-	return fmt.Sprintf("PB_STRING(%q)", item.value)
-}
-
-func (item PBString) Type() byte {
-	return PB_STRING
-}
-
-type PBNeg struct {
-	value int
-}
-
-func (item PBNeg) String() string {
-	return fmt.Sprintf("PB_NEG(%d)", item.value)
-}
-
-func (item PBNeg) Type() byte {
-	return PB_NEG
-}
-
-type PBFloat struct {
-	value float64
-}
-
-func (item PBFloat) String() string {
-	return fmt.Sprintf("PB_FLOAT(%f)", item.value)
-}
-
-func (item PBFloat) Type() byte {
-	return PB_FLOAT
-}
-
-type PBVocab struct {
-	value int
-}
-
-func (item PBVocab) Type() byte {
-	return PB_VOCAB
-}
-
-func (item PBVocab) String() string {
-	name, ok := pb_vocabulary[item.value]
-	if !ok {
-		return fmt.Sprintf("PB_VOCAB(%d)", item.value)
-	}
-	return fmt.Sprintf("PB_VOCAB(%s)", name)
-}
-
-type PBUnknown struct {
-	intBuffer []byte
-	c         byte
-}
-
-func (item PBUnknown) String() string {
-	return fmt.Sprintf("* %v %s *", item.intBuffer, dumpByte(item.c))
-}
-
-func (item PBUnknown) Type() byte {
-	return 0
 }
 
 type Parser struct {

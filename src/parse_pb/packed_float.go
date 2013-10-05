@@ -6,16 +6,16 @@
 package parse_pb
 
 import (
-   "math"
+	"math"
 )
 
 const (
 	PackedFloatSliceSize = 8
 )
 
-// marshallPackedFloat converts 'number' into a slice of 8 bytes, which form 
+// marshallPackedFloat converts 'number' into a slice of 8 bytes, which form
 // the representation of the number: see IEEE 754
-func marshallPackedFloat(number float64) []byte {	
+func marshallPackedFloat(number float64) []byte {
 	uintVal := math.Float64bits(number)
 	if uintVal == 0 {
 		return []byte{0, 0, 0, 0, 0, 0, 0, 0}
@@ -38,7 +38,7 @@ func unmarshallPackedFloat(marshalledFloat []byte) float64 {
 	for _, b := range marshalledFloat {
 		uintVal = uintVal << 8
 		uintVal = uintVal | uint64(b)
-	} 
+	}
 
 	return math.Float64frombits(uintVal)
 }

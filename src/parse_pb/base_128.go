@@ -6,10 +6,10 @@
 package parse_pb
 
 import (
-   "fmt"
+	"fmt"
 )
 
-// marshallBase128Int converts 'number' into a slice of bytes, which form 
+// marshallBase128Int converts 'number' into a slice of bytes, which form
 // the reresentation of the number in base 128
 func marshallBase128Int(number int) ([]byte, error) {
 	if number < 0 {

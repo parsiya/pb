@@ -15,6 +15,7 @@ import (
 // listener listens for connections on the specified address
 func listen(address string) {	
 	listener, err := net.Listen("tcp", address)
+	defer listener.Close()
 	if err != nil {
 		log.Fatalf("CRITICAL: listener.Listen error %s", err)
 	}

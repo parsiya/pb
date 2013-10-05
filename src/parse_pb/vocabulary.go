@@ -29,7 +29,7 @@ const (
 	VocabRemote = 16
 	VocabLocal  = 17
 	VocabLcache = 18
-	
+
 	// PB Protocol Messages
 	VocabVersion      = 19
 	VocabLogin        = 20
@@ -61,7 +61,7 @@ var (
 		VocabTuple:         "Tuple",
 		VocabUnpersistable: "Unpersistable",
 
-		// PB Data Types    
+		// PB Data Types
 		VocabCopy:   "Copy",
 		VocabCache:  "Cache",
 		VocabCached: "Cached",
@@ -69,7 +69,7 @@ var (
 		VocabLocal:  "Local",
 		VocabLcache: "Lcache",
 
-		// PB Protocol Messages    
+		// PB Protocol Messages
 		VocabVersion:      "Version",
 		VocabLogin:        "Login",
 		VocabPassword:     "Password",

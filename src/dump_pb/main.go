@@ -27,7 +27,7 @@ func main() {
 			if err == io.EOF {
 				break
 			}
-			log.Fatalf("CRITICAL: error on ReadByte %s", err)
+			log.Fatalf("CRITICAL: error on parser.Step %s", err)
 		}
 		log.Printf("DEBUG: %s", result)
 	}
