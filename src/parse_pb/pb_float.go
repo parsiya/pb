@@ -18,6 +18,14 @@ func NewPBFloat(value float64) PBFloat {
 	return PBFloat{value: value}
 }
 
+func UnmarshallPBFloat(parser *Parser) (PBFloat, error) {
+	marshalledFloat, err := parser.readAll(PackedFloatSliceSize)
+	if err != nil {
+		return PBFloat{}, err
+	}
+	return PBFloat{value: unmarshallPackedFloat(marshalledFloat)}, nil
+}
+
 func (item PBFloat) Type() byte {
 	return PB_FLOAT
 }

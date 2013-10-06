@@ -18,6 +18,20 @@ func NewPBList(items ...parseItem) PBList {
 	return PBList{value: items}
 }
 
+func UnmarshallPBList(intBuffer []byte, parser *Parser) (PBList, error) {
+	size := unmarshallBase128Int(intBuffer)
+	list := PBList{value: make([]parseItem, size)}
+	for j := 0; j < size; j++ {
+		value, err := parser.Step()
+		if err != nil {
+			return PBList{}, err
+		}
+		list.value[j] = value
+	}
+
+	return list, nil	
+}
+
 func (item PBList) Type() byte {
 	return PB_LIST
 }

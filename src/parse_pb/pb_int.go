@@ -18,6 +18,10 @@ func NewPBInt(value int) PBInt {
 	return PBInt{value: value}
 }
 
+func UnmarshallPBInt(intBuffer []byte) (PBInt, error) {
+	return NewPBInt(unmarshallBase128Int(intBuffer)), nil
+}
+
 func (item PBInt) Type() byte {
 	return PB_INT
 }

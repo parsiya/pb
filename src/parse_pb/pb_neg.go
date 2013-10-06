@@ -18,6 +18,10 @@ func NewPBNeg(value int) PBNeg {
 	return PBNeg{value: value}
 }
 
+func UnmarshallPBNeg(intBuffer []byte) (PBNeg, error) {
+	return NewPBNeg(-unmarshallBase128Int(intBuffer)), nil
+}
+
 func (item PBNeg) String() string {
 	return fmt.Sprintf("PB_NEG(%d)", item.value)
 }

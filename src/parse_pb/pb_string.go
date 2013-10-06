@@ -18,6 +18,15 @@ func NewPBString(data string) PBString {
 	return PBString{value: []byte(data)}
 }
 
+func UnmarshallPBString(intBuffer []byte, parser *Parser) (PBString, error) {
+	size := unmarshallBase128Int(intBuffer)
+	data, err := parser.readAll(size)
+	if err != nil {
+		return PBString{}, err
+	}
+	return PBString{value: data}, nil
+}
+
 func (item PBString) Type() byte {
 	return PB_STRING
 }

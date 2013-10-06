@@ -70,66 +70,19 @@ func (parser *Parser) Step() (parseItem, error) {
 	}
 	switch c {
 	case PB_LIST:
-		return parser.parseList(unmarshallBase128Int(intBuffer), c)
+		return UnmarshallPBList(intBuffer, parser)
 	case PB_INT:
-		return parser.parseInt(unmarshallBase128Int(intBuffer), c)
+		return UnmarshallPBInt(intBuffer)
 	case PB_STRING:
-		return parser.parseString(unmarshallBase128Int(intBuffer), c)
+		return UnmarshallPBString(intBuffer, parser)
 	case PB_NEG:
-		return parser.parseNeg(-unmarshallBase128Int(intBuffer), c)
+		return UnmarshallPBNeg(intBuffer)
 	case PB_FLOAT:
-		return parser.parseFloat(c)
+		return UnmarshallPBFloat(parser)
 	case PB_VOCAB:
-		return parser.parseVocab(unmarshallBase128Int(intBuffer), c)
+		return UnmarshallPBVocab(intBuffer)
 	}
-	return parser.parseUnknown(intBuffer, c)
-}
-
-func (parser *Parser) parseList(i int, _ byte) (parseItem, error) {
-	size := i
-	list := PBList{value: make([]parseItem, size)}
-	for j := 0; j < size; j++ {
-		value, err := parser.Step()
-		if err != nil {
-			return nil, err
-		}
-		list.value[j] = value
-	}
-
-	return list, nil
-}
-
-func (parser *Parser) parseInt(i int, _ byte) (parseItem, error) {
-	return PBInt{value: i}, nil
-}
-
-func (parser *Parser) parseString(i int, _ byte) (parseItem, error) {
-	data, err := parser.readAll(i)
-	if err != nil {
-		return nil, err
-	}
-	return PBString{value: data}, nil
-}
-
-func (parser *Parser) parseNeg(i int, _ byte) (parseItem, error) {
-	return PBNeg{value: i}, nil
-}
-
-func (parser *Parser) parseFloat(_ byte) (parseItem, error) {
-	marshalledFloat, err := parser.readAll(PackedFloatSliceSize)
-	if err != nil {
-		return nil, err
-	}
-	return PBFloat{value: unmarshallPackedFloat(marshalledFloat)}, nil
-}
-
-func (parser *Parser) parseVocab(i int, _ byte) (parseItem, error) {
-	return PBVocab{value: i}, nil
-}
-
-func (parser *Parser) parseUnknown(intBuffer []byte, c byte) (
-	parseItem, error) {
-	return PBUnknown{intBuffer: intBuffer, c: c}, nil
+	return UnmarshallUnknown(intBuffer, c)
 }
 
 // dumpByte dumps one byte

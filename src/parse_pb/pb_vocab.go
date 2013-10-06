@@ -18,6 +18,10 @@ func NewPBVocab(vocab int) PBVocab {
 	return PBVocab{value: vocab}
 }
 
+func UnmarshallPBVocab(intBuffer []byte) (PBVocab, error) {
+	return NewPBVocab(unmarshallBase128Int(intBuffer)), nil
+}
+
 func (item PBVocab) Type() byte {
 	return PB_VOCAB
 }

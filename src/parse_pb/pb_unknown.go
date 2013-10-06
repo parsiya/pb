@@ -23,6 +23,10 @@ func NewPBUnknown(c byte, intBuffer []byte) PBUnknown {
 	return PBUnknown{intBuffer: intBuffer, c: c}
 }
 
+func UnmarshallUnknown(intBuffer []byte, c byte) (PBUnknown, error) {
+	return NewPBUnknown(c, intBuffer), nil
+}
+
 func (item PBUnknown) String() string {
 	return fmt.Sprintf("* %v %s *", item.intBuffer, dumpByte(item.c))
 }
