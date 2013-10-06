@@ -41,6 +41,7 @@ var (
 type parseItem interface {
 	Type() byte
 	String() string
+	Marshall(io.Writer) error
 }
 
 type Parser struct {
