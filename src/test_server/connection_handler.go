@@ -28,6 +28,12 @@ func handleConnection(connection net.Conn) {
 	if err != nil {
 		log.Fatalf("CRITICAL: parse_pb.NewParser failed %s", err)
 	}
+
+	// send the initial greeting to the client
+	if err := greeting.Marshal(connection); err != nil {
+		log.Fatalf("CRITICAL: greeting.Marshal %s %s", greeting.String(), err)
+	}
+
 	for {
 		result, err := parser.Step()
 		if err != nil {
@@ -36,7 +42,15 @@ func handleConnection(connection net.Conn) {
 			}
 			log.Fatalf("CRITICAL: error on parser.Step %s", err)
 		}
-		log.Printf("DEBUG: %s", result)
+		switch result := result.(type) {
+		case parse_pb.PBString:
+			log.Printf("DEBUG: received PBString %s", result.String())
+			continue
+		case parse_pb.PBList:
+			log.Printf("DEBUG: received PBList %s", result.String())
+			continue
+		}
+		log.Fatalf("CRITICAL: unexpected input from client %s", result.String())
 	}
 	log.Printf("INFO: handleConnection ends %s", connection.RemoteAddr())
 }

@@ -6,6 +6,7 @@
 package main
 
 import (
+   	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -14,12 +15,21 @@ import (
 
 const (
 	signalChannelCapacity = 1
-	listenAddress = ":6666"
 )
+
+var (
+	listenAddress string
+)
+
+func init() {
+	flag.StringVar(&listenAddress, "address", "", "<host:port> to listen on")
+}
 
 // main entry point for ergo_prpoxy
 func main() {
 	log.Printf("INFO: program starts")
+
+	flag.Parse()
 
 	// set up a signal handling channel
 	signalChannel := make(chan os.Signal, signalChannelCapacity)
