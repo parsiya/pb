@@ -18,8 +18,8 @@ func NewPBVocab(vocab int) PBVocab {
 	return PBVocab{value: vocab}
 }
 
-func UnmarshallPBVocab(intBuffer []byte) (PBVocab, error) {
-	return NewPBVocab(unmarshallBase128Int(intBuffer)), nil
+func UnmarshalPBVocab(intBuffer []byte) (PBVocab, error) {
+	return NewPBVocab(unmarshalBase128Int(intBuffer)), nil
 }
 
 func (item PBVocab) Type() byte {
@@ -34,12 +34,12 @@ func (item PBVocab) String() string {
 	return fmt.Sprintf("PB_VOCAB(%s)", name)
 }
 
-func (item PBVocab) Marshall(writer io.Writer) error {
-	marshalledVocab, err := marshallBase128Int(item.value) 
+func (item PBVocab) Marshal(writer io.Writer) error {
+	marshaledVocab, err := marshalBase128Int(item.value)
 	if err != nil {
 		return err
 	}
-	if _, err := writer.Write(marshalledVocab); err != nil {
+	if _, err := writer.Write(marshaledVocab); err != nil {
 		return err
 	}
 	if _, err := writer.Write([]byte{PB_VOCAB}); err != nil {

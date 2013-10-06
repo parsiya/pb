@@ -1,7 +1,7 @@
 /* packed_float.go
    package parse_pb
 
-   parsing and generating twisted numeric marshalling (packed float)
+   parsing and generating twisted numeric marshaling (packed float)
 */
 package parse_pb
 
@@ -13,9 +13,9 @@ const (
 	PackedFloatSliceSize = 8
 )
 
-// marshallPackedFloat converts 'number' into a slice of 8 bytes, which form
+// marshalPackedFloat converts 'number' into a slice of 8 bytes, which form
 // the representation of the number: see IEEE 754
-func marshallPackedFloat(number float64) []byte {
+func marshalPackedFloat(number float64) []byte {
 	uintVal := math.Float64bits(number)
 	if uintVal == 0 {
 		return []byte{0, 0, 0, 0, 0, 0, 0, 0}
@@ -30,12 +30,12 @@ func marshallPackedFloat(number float64) []byte {
 	return result
 }
 
-// unmarshallPackedFloat converts a slice of bytes to a float
+// unmarshalPackedFloat converts a slice of bytes to a float
 // see see IEEE 754
-func unmarshallPackedFloat(marshalledFloat []byte) float64 {
+func unmarshalPackedFloat(marshaledFloat []byte) float64 {
 	var uintVal uint64
 
-	for _, b := range marshalledFloat {
+	for _, b := range marshaledFloat {
 		uintVal = uintVal << 8
 		uintVal = uintVal | uint64(b)
 	}

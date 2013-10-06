@@ -1,7 +1,7 @@
 /* packed_float_test.go
    package parse_pb
 
-   test parsing and generating twisted numeric marshalling for floating point
+   test parsing and generating twisted numeric marshaling for floating point
 */
 package parse_pb
 
@@ -11,8 +11,8 @@ import (
 )
 
 type testFloatItem struct {
-	Number          float64
-	MarshalledFloat []byte
+	Number         float64
+	MarshaledFloat []byte
 }
 
 var (
@@ -35,24 +35,24 @@ var (
 		testFloatItem{0.0915535444595782, []byte{63, 183, 112, 13, 151, 73, 105, 200}}}
 )
 
-func TestMarshallPackedFloat(t *testing.T) {
+func TestMarshalPackedFloat(t *testing.T) {
 
 	for n, testFloatItem := range testFloatItems {
-		result := marshallPackedFloat(testFloatItem.Number)
-		if bytes.Compare(result, testFloatItem.MarshalledFloat) != 0 {
-			t.Errorf("#%d marshallPackedFloat(%v) = %v, want %v",
-				n+1, testFloatItem.Number, result, testFloatItem.MarshalledFloat)
+		result := marshalPackedFloat(testFloatItem.Number)
+		if bytes.Compare(result, testFloatItem.MarshaledFloat) != 0 {
+			t.Errorf("#%d marshalPackedFloat(%v) = %v, want %v",
+				n+1, testFloatItem.Number, result, testFloatItem.MarshaledFloat)
 		}
 	}
 }
 
-func TestUnmarshallPackedFloat(t *testing.T) {
+func TestUnmarshalPackedFloat(t *testing.T) {
 
 	for n, testFloatItem := range testFloatItems {
-		result := unmarshallPackedFloat(testFloatItem.MarshalledFloat)
+		result := unmarshalPackedFloat(testFloatItem.MarshaledFloat)
 		if result != testFloatItem.Number {
-			t.Errorf("#%d unmarshallPackedFloat(%v) = %v, want %v",
-				n+1, testFloatItem.MarshalledFloat, result, testFloatItem.Number)
+			t.Errorf("#%d unmarshalPackedFloat(%v) = %v, want %v",
+				n+1, testFloatItem.MarshaledFloat, result, testFloatItem.Number)
 		}
 	}
 }

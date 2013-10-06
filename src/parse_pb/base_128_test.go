@@ -1,7 +1,7 @@
 /* base_128_test.go
    package parse_pb
 
-   test parsing and generating twisted numeric marshalling
+   test parsing and generating twisted numeric marshaling
 */
 package parse_pb
 
@@ -11,8 +11,8 @@ import (
 )
 
 type testItem struct {
-	Number        int
-	MarshalledInt []byte
+	Number       int
+	MarshaledInt []byte
 }
 
 var (
@@ -43,28 +43,28 @@ var (
 		testItem{732654087, []byte{7, 84, 45, 93, 2}}}
 )
 
-func TestMarshallInt(t *testing.T) {
+func TestMarshalInt(t *testing.T) {
 
 	for n, testItem := range testItems {
-		result, err := marshallBase128Int(testItem.Number)
+		result, err := marshalBase128Int(testItem.Number)
 		if err != nil {
-			t.Errorf("#%d error marshallBase128Int(%v) %s",
+			t.Errorf("#%d error marshalBase128Int(%v) %s",
 				n+1, testItem.Number, err)
 		}
-		if bytes.Compare(result, testItem.MarshalledInt) != 0 {
-			t.Errorf("#%d marshallBase128Int(%v) = %v, want %v",
-				n+1, testItem.Number, result, testItem.MarshalledInt)
+		if bytes.Compare(result, testItem.MarshaledInt) != 0 {
+			t.Errorf("#%d marshalBase128Int(%v) = %v, want %v",
+				n+1, testItem.Number, result, testItem.MarshaledInt)
 		}
 	}
 }
 
-func TestUnmarshallInt(t *testing.T) {
+func TestUnmarshalInt(t *testing.T) {
 
 	for n, testItem := range testItems {
-		result := unmarshallBase128Int(testItem.MarshalledInt)
+		result := unmarshalBase128Int(testItem.MarshaledInt)
 		if result != testItem.Number {
-			t.Errorf("#%d unmarshallBase128Int(%v) = %v, want %v",
-				n+1, testItem.MarshalledInt, result, testItem.Number)
+			t.Errorf("#%d unmarshalBase128Int(%v) = %v, want %v",
+				n+1, testItem.MarshaledInt, result, testItem.Number)
 		}
 	}
 }

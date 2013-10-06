@@ -18,8 +18,8 @@ func NewPBList(items ...parseItem) PBList {
 	return PBList{value: items}
 }
 
-func UnmarshallPBList(intBuffer []byte, parser *Parser) (PBList, error) {
-	size := unmarshallBase128Int(intBuffer)
+func UnmarshalPBList(intBuffer []byte, parser *Parser) (PBList, error) {
+	size := unmarshalBase128Int(intBuffer)
 	list := PBList{value: make([]parseItem, size)}
 	for j := 0; j < size; j++ {
 		value, err := parser.Step()
@@ -29,7 +29,7 @@ func UnmarshallPBList(intBuffer []byte, parser *Parser) (PBList, error) {
 		list.value[j] = value
 	}
 
-	return list, nil	
+	return list, nil
 }
 
 func (item PBList) Type() byte {
@@ -44,21 +44,21 @@ func (item PBList) String() string {
 	return fmt.Sprintf("PB_LIST(%s)", strings.Join(printValues, ","))
 }
 
-func (item PBList) Marshall(writer io.Writer) error {
-	marshalledLen, err := marshallBase128Int(len(item.value)) 
+func (item PBList) Marshal(writer io.Writer) error {
+	marshaledLen, err := marshalBase128Int(len(item.value))
 	if err != nil {
 		return err
 	}
-	if _, err := writer.Write(marshalledLen); err != nil {
+	if _, err := writer.Write(marshaledLen); err != nil {
 		return err
 	}
 	if _, err := writer.Write([]byte{PB_LIST}); err != nil {
 		return err
 	}
-	for i := len(item.value)-1; i >= 0; i = i - 1 {
-		if err := item.value[i].Marshall(writer); err != nil {
+	for i := len(item.value) - 1; i >= 0; i = i - 1 {
+		if err := item.value[i].Marshal(writer); err != nil {
 			return err
-		} 
+		}
 	}
 	return nil
 }

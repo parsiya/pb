@@ -18,8 +18,8 @@ func NewPBString(data string) PBString {
 	return PBString{value: []byte(data)}
 }
 
-func UnmarshallPBString(intBuffer []byte, parser *Parser) (PBString, error) {
-	size := unmarshallBase128Int(intBuffer)
+func UnmarshalPBString(intBuffer []byte, parser *Parser) (PBString, error) {
+	size := unmarshalBase128Int(intBuffer)
 	data, err := parser.readAll(size)
 	if err != nil {
 		return PBString{}, err
@@ -35,12 +35,12 @@ func (item PBString) String() string {
 	return fmt.Sprintf("PB_STRING(%q)", item.value)
 }
 
-func (item PBString) Marshall(writer io.Writer) error {
-	marshalledLen, err := marshallBase128Int(len(item.value)) 
+func (item PBString) Marshal(writer io.Writer) error {
+	marshaledLen, err := marshalBase128Int(len(item.value))
 	if err != nil {
 		return err
 	}
-	if _, err := writer.Write(marshalledLen); err != nil {
+	if _, err := writer.Write(marshaledLen); err != nil {
 		return err
 	}
 	if _, err := writer.Write([]byte{PB_STRING}); err != nil {

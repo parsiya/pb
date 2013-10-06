@@ -18,12 +18,12 @@ func NewPBFloat(value float64) PBFloat {
 	return PBFloat{value: value}
 }
 
-func UnmarshallPBFloat(parser *Parser) (PBFloat, error) {
-	marshalledFloat, err := parser.readAll(PackedFloatSliceSize)
+func UnmarshalPBFloat(parser *Parser) (PBFloat, error) {
+	marshaledFloat, err := parser.readAll(PackedFloatSliceSize)
 	if err != nil {
 		return PBFloat{}, err
 	}
-	return PBFloat{value: unmarshallPackedFloat(marshalledFloat)}, nil
+	return PBFloat{value: unmarshalPackedFloat(marshaledFloat)}, nil
 }
 
 func (item PBFloat) Type() byte {
@@ -34,11 +34,11 @@ func (item PBFloat) String() string {
 	return fmt.Sprintf("PB_FLOAT(%f)", item.value)
 }
 
-func (item PBFloat) Marshall(writer io.Writer) error {
+func (item PBFloat) Marshal(writer io.Writer) error {
 	if _, err := writer.Write([]byte{PB_FLOAT}); err != nil {
 		return err
 	}
-	if _, err := writer.Write(marshallPackedFloat(item.value)); err != nil {
+	if _, err := writer.Write(marshalPackedFloat(item.value)); err != nil {
 		return err
 	}
 	return nil

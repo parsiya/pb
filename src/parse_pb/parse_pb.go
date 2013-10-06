@@ -41,7 +41,7 @@ var (
 type parseItem interface {
 	Type() byte
 	String() string
-	Marshall(io.Writer) error
+	Marshal(io.Writer) error
 }
 
 type Parser struct {
@@ -70,19 +70,19 @@ func (parser *Parser) Step() (parseItem, error) {
 	}
 	switch c {
 	case PB_LIST:
-		return UnmarshallPBList(intBuffer, parser)
+		return UnmarshalPBList(intBuffer, parser)
 	case PB_INT:
-		return UnmarshallPBInt(intBuffer)
+		return UnmarshalPBInt(intBuffer)
 	case PB_STRING:
-		return UnmarshallPBString(intBuffer, parser)
+		return UnmarshalPBString(intBuffer, parser)
 	case PB_NEG:
-		return UnmarshallPBNeg(intBuffer)
+		return UnmarshalPBNeg(intBuffer)
 	case PB_FLOAT:
-		return UnmarshallPBFloat(parser)
+		return UnmarshalPBFloat(parser)
 	case PB_VOCAB:
-		return UnmarshallPBVocab(intBuffer)
+		return UnmarshalPBVocab(intBuffer)
 	}
-	return UnmarshallUnknown(intBuffer, c)
+	return UnmarshalUnknown(intBuffer, c)
 }
 
 // dumpByte dumps one byte
