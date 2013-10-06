@@ -29,7 +29,7 @@ func UnmarshalPBList(intBuffer []byte, parser *Parser) (PBList, error) {
 		list.value[j] = value
 	}
 
-	return list, nil
+	return list, nil	
 }
 
 func (item PBList) Type() byte {
@@ -45,7 +45,7 @@ func (item PBList) String() string {
 }
 
 func (item PBList) Marshal(writer io.Writer) error {
-	marshaledLen, err := marshalBase128Int(len(item.value))
+	marshaledLen, err := marshalBase128Int(len(item.value)) 
 	if err != nil {
 		return err
 	}
@@ -55,10 +55,10 @@ func (item PBList) Marshal(writer io.Writer) error {
 	if _, err := writer.Write([]byte{PB_LIST}); err != nil {
 		return err
 	}
-	for i := len(item.value) - 1; i >= 0; i = i - 1 {
-		if err := item.value[i].Marshal(writer); err != nil {
+	for _, subItem := range item.value {
+		if err := subItem.Marshal(writer); err != nil {
 			return err
-		}
+		} 
 	}
 	return nil
 }
