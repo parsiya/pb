@@ -37,10 +37,6 @@ func UnmarshalPBList(intBuffer []byte, parser *Parser) (PBList, error) {
 	return list, nil	
 }
 
-func (item PBList) Type() byte {
-	return PB_LIST
-}
-
 func (item PBList) String() string {
 	var printValues []string
 	for _, x := range item.Value {

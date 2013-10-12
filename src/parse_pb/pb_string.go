@@ -27,10 +27,6 @@ func UnmarshalPBString(intBuffer []byte, parser *Parser) (PBString, error) {
 	return PBString{Value: data}, nil
 }
 
-func (item PBString) Type() byte {
-	return PB_STRING
-}
-
 func (item PBString) String() string {
 	return fmt.Sprintf("PB_STRING(%q)", item.Value)
 }

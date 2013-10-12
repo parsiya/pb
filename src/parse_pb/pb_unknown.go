@@ -15,10 +15,6 @@ type PBUnknown struct {
 	c         byte
 }
 
-func (item PBUnknown) Type() byte {
-	return 0
-}
-
 func NewPBUnknown(c byte, intBuffer []byte) PBUnknown {
 	return PBUnknown{intBuffer: intBuffer, c: c}
 }

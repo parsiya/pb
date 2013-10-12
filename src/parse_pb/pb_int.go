@@ -22,10 +22,6 @@ func UnmarshalPBInt(intBuffer []byte) (PBInt, error) {
 	return NewPBInt(unmarshalBase128Int(intBuffer)), nil
 }
 
-func (item PBInt) Type() byte {
-	return PB_INT
-}
-
 func (item PBInt) String() string {
 	return fmt.Sprintf("PB_INT(%d)", item.Value)
 }

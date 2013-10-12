@@ -26,10 +26,6 @@ func (item PBNeg) String() string {
 	return fmt.Sprintf("PB_NEG(%d)", item.Value)
 }
 
-func (item PBNeg) Type() byte {
-	return PB_NEG
-}
-
 func (item PBNeg) Marshal(writer io.Writer) error {
 	marshaledNeg, err := marshalBase128Int(-item.Value) // must be positive
 	if err != nil {

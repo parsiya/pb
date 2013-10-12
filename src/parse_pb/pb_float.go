@@ -26,10 +26,6 @@ func UnmarshalPBFloat(parser *Parser) (PBFloat, error) {
 	return PBFloat{Value: unmarshalPackedFloat(marshaledFloat)}, nil
 }
 
-func (item PBFloat) Type() byte {
-	return PB_FLOAT
-}
-
 func (item PBFloat) String() string {
 	return fmt.Sprintf("PB_FLOAT(%f)", item.Value)
 }

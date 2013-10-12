@@ -39,7 +39,6 @@ var (
 )
 
 type parseItem interface {
-	Type() byte
 	String() string
 	Marshal(io.Writer) error
 }

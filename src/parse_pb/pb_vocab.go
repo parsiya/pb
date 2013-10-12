@@ -100,10 +100,6 @@ func UnmarshalPBVocab(intBuffer []byte) (PBVocab, error) {
 	return NewPBVocab(unmarshalBase128Int(intBuffer)), nil
 }
 
-func (item PBVocab) Type() byte {
-	return PB_VOCAB
-}
-
 func (item PBVocab) String() string {
 	name, ok := pb_vocabulary[item.Value]
 	if !ok {
