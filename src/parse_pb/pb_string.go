@@ -11,11 +11,11 @@ import (
 )
 
 type PBString struct {
-	value []byte
+	Value []byte
 }
 
 func NewPBString(data string) PBString {
-	return PBString{value: []byte(data)}
+	return PBString{Value: []byte(data)}
 }
 
 func UnmarshalPBString(intBuffer []byte, parser *Parser) (PBString, error) {
@@ -24,7 +24,7 @@ func UnmarshalPBString(intBuffer []byte, parser *Parser) (PBString, error) {
 	if err != nil {
 		return PBString{}, err
 	}
-	return PBString{value: data}, nil
+	return PBString{Value: data}, nil
 }
 
 func (item PBString) Type() byte {
@@ -32,11 +32,11 @@ func (item PBString) Type() byte {
 }
 
 func (item PBString) String() string {
-	return fmt.Sprintf("PB_STRING(%q)", item.value)
+	return fmt.Sprintf("PB_STRING(%q)", item.Value)
 }
 
 func (item PBString) Marshal(writer io.Writer) error {
-	marshaledLen, err := marshalBase128Int(len(item.value))
+	marshaledLen, err := marshalBase128Int(len(item.Value))
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (item PBString) Marshal(writer io.Writer) error {
 	if _, err := writer.Write([]byte{PB_STRING}); err != nil {
 		return err
 	}
-	if _, err := writer.Write(item.value); err != nil {
+	if _, err := writer.Write(item.Value); err != nil {
 		return err
 	}
 	return nil

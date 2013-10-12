@@ -36,7 +36,7 @@ func TestPBNeg(t *testing.T) {
 			t.Errorf("#%d unable to convert result %s", n+1, result.String)
 			continue
 		}
-		if resultNeg.value != testValue {
+		if resultNeg.Value != testValue {
 			t.Errorf("#%d expecting %d found %s",
 				n+1, testValue, result.String())
 		}	

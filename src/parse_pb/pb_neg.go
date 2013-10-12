@@ -11,11 +11,11 @@ import (
 )
 
 type PBNeg struct {
-	value int
+	Value int
 }
 
-func NewPBNeg(value int) PBNeg {
-	return PBNeg{value: value}
+func NewPBNeg(Value int) PBNeg {
+	return PBNeg{Value: Value}
 }
 
 func UnmarshalPBNeg(intBuffer []byte) (PBNeg, error) {
@@ -23,7 +23,7 @@ func UnmarshalPBNeg(intBuffer []byte) (PBNeg, error) {
 }
 
 func (item PBNeg) String() string {
-	return fmt.Sprintf("PB_NEG(%d)", item.value)
+	return fmt.Sprintf("PB_NEG(%d)", item.Value)
 }
 
 func (item PBNeg) Type() byte {
@@ -31,7 +31,7 @@ func (item PBNeg) Type() byte {
 }
 
 func (item PBNeg) Marshal(writer io.Writer) error {
-	marshaledNeg, err := marshalBase128Int(-item.value) // must be positive
+	marshaledNeg, err := marshalBase128Int(-item.Value) // must be positive
 	if err != nil {
 		return err
 	}

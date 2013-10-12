@@ -11,11 +11,11 @@ import (
 )
 
 type PBInt struct {
-	value int
+	Value int
 }
 
-func NewPBInt(value int) PBInt {
-	return PBInt{value: value}
+func NewPBInt(Value int) PBInt {
+	return PBInt{Value: Value}
 }
 
 func UnmarshalPBInt(intBuffer []byte) (PBInt, error) {
@@ -27,11 +27,11 @@ func (item PBInt) Type() byte {
 }
 
 func (item PBInt) String() string {
-	return fmt.Sprintf("PB_INT(%d)", item.value)
+	return fmt.Sprintf("PB_INT(%d)", item.Value)
 }
 
 func (item PBInt) Marshal(writer io.Writer) error {
-	marshaledInt, err := marshalBase128Int(item.value)
+	marshaledInt, err := marshalBase128Int(item.Value)
 	if err != nil {
 		return err
 	}

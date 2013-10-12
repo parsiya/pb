@@ -89,11 +89,11 @@ var (
 )
 
 type PBVocab struct {
-	value int
+	Value int
 }
 
 func NewPBVocab(vocab int) PBVocab {
-	return PBVocab{value: vocab}
+	return PBVocab{Value: vocab}
 }
 
 func UnmarshalPBVocab(intBuffer []byte) (PBVocab, error) {
@@ -105,15 +105,15 @@ func (item PBVocab) Type() byte {
 }
 
 func (item PBVocab) String() string {
-	name, ok := pb_vocabulary[item.value]
+	name, ok := pb_vocabulary[item.Value]
 	if !ok {
-		return fmt.Sprintf("PB_VOCAB(%d)", item.value)
+		return fmt.Sprintf("PB_VOCAB(%d)", item.Value)
 	}
 	return fmt.Sprintf("PB_VOCAB(%s)", name)
 }
 
 func (item PBVocab) Marshal(writer io.Writer) error {
-	marshaledVocab, err := marshalBase128Int(item.value) 
+	marshaledVocab, err := marshalBase128Int(item.Value) 
 	if err != nil {
 		return err
 	}

@@ -36,7 +36,7 @@ func TestPBFloat(t *testing.T) {
 			t.Errorf("#%d unable to convert result %s", n+1, result.String)
 			continue
 		}
-		if resultFloat.value != testValue {
+		if resultFloat.Value != testValue {
 			t.Errorf("#%d expecting %d found %s",
 				n+1, testValue, result.String())
 		}	

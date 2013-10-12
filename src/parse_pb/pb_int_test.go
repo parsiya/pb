@@ -35,7 +35,7 @@ func TestPBInt(t *testing.T) {
 			t.Errorf("#%d unable to convert result %s", n+1, result.String)
 			continue
 		}
-		if resultInt.value != testValue {
+		if resultInt.Value != testValue {
 			t.Errorf("#%d expecting %d found %s",
 				n+1, testValue, result.String())
 		}	
