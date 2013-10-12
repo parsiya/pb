@@ -14,6 +14,11 @@ type PBList struct {
 	Value []parseItem
 }
 
+type PBVersionList struct {
+	PBList
+	Version int
+}
+
 func NewPBList(items ...parseItem) PBList {
 	return PBList{Value: items}
 }
@@ -61,4 +66,26 @@ func (item PBList) Marshal(writer io.Writer) error {
 		} 
 	}
 	return nil
+}
+
+// Reparse attempts to match the internal structure of a PBList
+// with a more fully defined object 
+func (item PBList) Reparse() parseItem {
+
+	// if you send us an empty list, you get back an empty list
+	if len(item.Value) == 0 {
+		return item
+	}
+
+	// We need an initial PB_VOCAB to understand the internals
+	vocabResult, ok := item.Value[0].(PBVocab)
+	if ! ok {
+		return item
+	}
+
+	switch vocabResult.Value {
+	case VocabVersion:
+		return item
+	}
+	return item
 }
