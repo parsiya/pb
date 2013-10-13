@@ -95,6 +95,57 @@ func loginState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
 	if !ok {
 		log.Printf("ERROR: (expecting login) %s", result)
 	}
+
+	// we expect a request for the root object
+	rawRootRequest := result.Reparse()
+	rootRequest, ok := rawRootRequest.(parse_pb.PBObjectMessageList)
+	if !ok {
+		log.Printf("ERROR: (expecting version) %s", rawRootRequest)
+		return nil
+	}
+
+	/*------------------------------------------------------------------------
+	** we're expecting this:
+	** PB_LIST(
+	** 0 PB_VOCAB(Message),
+	** 1 PB_INT(1),
+	** 2 PB_STRING("root"),
+	** 3 PB_VOCAB(Login),
+	** 4 PB_INT(1),
+	** 5 PB_LIST(
+	**   0 PB_VOCAB(Tuple),
+	**   1 PB_LIST(
+	**     0 PB_STRING("unicode"),
+	**     1 PB_STRING("FunctionalTestUser1@1"))),
+	** 6 PB_LIST(
+	**   0 PB_VOCAB(Dictionary)))
+	** TODO: parse the whole thing
+	** XXX: need to handle the non unicode case
+	**-----------------------------------------------------------------------*/
+	var userString parse_pb.PBString
+
+	internalList, ok := rootRequest.PBList.Value[5].(parse_pb.PBList)
+	if !ok {
+		log.Printf("ERROR: (internal list) %s", rootRequest)
+		return nil
+	} 
+	// if we have a list, it's twisted unicode, if a string its the userid
+	switch internalItem := internalList.Value[1].(type) {
+	case parse_pb.PBList:
+		userString, ok = internalItem.Value[1].(parse_pb.PBString)
+		if !ok {
+			log.Printf("ERROR: (expecting userString) %s", internalItem)
+			return nil
+		}
+	case parse_pb.PBString:
+		userString = internalItem
+	default:
+		log.Printf("ERROR: unexpected type in root request %s %s", 
+			internalList, rootRequest)
+		return nil
+	}
+
+	log.Printf("DEBUG: userString = %s", string(userString.Value))
 	log.Printf("DEBUG: %s", result)
 	return nil
 }
