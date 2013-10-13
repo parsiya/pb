@@ -12,11 +12,19 @@ import (
    "io"
    "log"
    "net"
+   "strings"
+   "strconv"
 )
 
+type State struct {
+	Connection net.Conn
+	Parser * parse_pb.Parser
+	UserName string
+	Device int
+}
+
 // state function inspired by Rob Pike's video 'Lexical Scanning in Go'
-type stateFunction func(parser * parse_pb.Parser, 
-	connection net.Conn) stateFunction
+type stateFunction func(state *State) stateFunction
 
 // handleConnection loops through state functions to handle messages
 // to and from the client
@@ -29,7 +37,10 @@ func handleConnection(connection net.Conn) {
 		log.Fatalf("CRITICAL: parse_pb.NewParser failed %s", err)
 	}
 
-	for state := startState; state != nil; state = state(parser, connection) {
+	state := State{Connection: connection, Parser: parser}
+
+	// main loop of state functions
+	for f := startState; f != nil; f = f(&state) {
 	}
 
 	log.Printf("INFO: handleConnection ends %s", connection.RemoteAddr())
@@ -37,18 +48,18 @@ func handleConnection(connection net.Conn) {
 
 // startState sends the initial greeting to the client and waits for the 
 // client's protocol choice
-func startState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
+func startState(state *State) stateFunction {
 	pbString := parse_pb.NewPBString("pb")
 	noneString := parse_pb.NewPBString("none")
 	greeting := parse_pb.NewPBList(pbString, noneString)
 
 	// send the initial greeting to the client
-	if err := greeting.Marshal(connection); err != nil {
+	if err := greeting.Marshal(state.Connection); err != nil {
 		log.Fatalf("CRITICAL: greeting.Marshal %s %s", greeting.String(), err)
 	}
 
 	// we expect the user to send the string 'pb'
-	rawResult, err := parser.Step()
+	rawResult, err := state.Parser.Step()
 	if err != nil {
 		log.Printf("ERROR: (expecting 'pb') %s", err)
 		return nil
@@ -62,7 +73,7 @@ func startState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
 	log.Printf("DEBUG: client protocol %s", clientProtocol)
 
 	// now we expect the user to send the version
-	rawResult, err = parser.Step()
+	rawResult, err = state.Parser.Step()
 	if err != nil {
 		log.Printf("ERROR: (expecting version) %s", err)
 		return nil
@@ -84,9 +95,9 @@ func startState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
 }
 
 // loginState handles message traffic for authenticating the client
-func loginState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
+func loginState(state *State) stateFunction {
 	// now we expect the user to send the login message
-	rawResult, err := parser.Step()
+	rawResult, err := state.Parser.Step()
 	if err != nil {
 		log.Printf("ERROR: (expecting login) %s", err)
 		return nil
@@ -146,14 +157,30 @@ func loginState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
 	}
 
 	log.Printf("DEBUG: userString = %s", string(userString.Value))
+	// we expect a string of the form <user-name>@<device-id>
+	splitName := strings.Split(string(userString.Value), "@")
+	if len(splitName) != 2 {
+		log.Printf("ERROR: Unparseable user name '%s'", userString)
+		return nil
+	}
+
+	deviceId, err := strconv.Atoi(splitName[1])
+	if err != nil {
+		log.Printf("ERROR: Unparseable device-id '%s' %s", userString, err)
+		return nil
+	}
+
+	state.UserName = splitName[0]
+	state.Device = deviceId
+
 	log.Printf("DEBUG: %s", result)
 	return nil
 }
 
 // runState handles message traffic for a fully connected client
-func runState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
+func runState(state *State) stateFunction {
 	for {
-		result, err := parser.Step()
+		result, err := state.Parser.Step()
 		if err != nil {
 			if err == io.EOF {
 				break
