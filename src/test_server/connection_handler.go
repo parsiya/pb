@@ -70,8 +70,15 @@ func startState(parser * parse_pb.Parser, connection net.Conn) stateFunction {
 	versionResult, ok := rawResult.(parse_pb.PBList)
 	if !ok {
 		log.Printf("ERROR: (expecting version) %s", versionResult)
+		return nil
 	}
-	log.Printf("DEBUG: client version %s", versionResult)
+	rawVersionItem := versionResult.Reparse()
+	versionItem, ok := rawVersionItem.(parse_pb.PBVersionList)
+	if !ok {
+		log.Printf("ERROR: (expecting version) %s", rawVersionItem)
+		return nil
+	}
+	log.Printf("DEBUG: client version %d", versionItem.Version)
 
 	return loginState
 }

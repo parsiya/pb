@@ -73,15 +73,24 @@ func (item PBList) Reparse() parseItem {
 		return item
 	}
 
-	// We need an initial PB_VOCAB to understand the internals
+	// We need an initial PBVocab to understand the internals
 	vocabResult, ok := item.Value[0].(PBVocab)
-	if ! ok {
+	if !ok {
 		return item
 	}
 
 	switch vocabResult.Value {
 	case VocabVersion:
-		return item
+		return parseVersionList(item)
 	}
 	return item
+}
+
+func parseVersionList(item PBList) parseItem {
+	intResult, ok := item.Value[1].(PBInt)
+	if !ok {
+		return item
+	}
+
+	return PBVersionList{PBList: item, Version: intResult.Value}
 }
