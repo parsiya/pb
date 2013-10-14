@@ -11,7 +11,7 @@ import (
 )
 
 type PBList struct {
-	Value []parseItem
+	Value []ParseItem
 }
 
 type PBVersionList struct {
@@ -37,13 +37,13 @@ type PBAnswerList struct {
 	Sequence int
 }
 
-func NewPBList(items ...parseItem) PBList {
+func NewPBList(items ...ParseItem) PBList {
 	return PBList{Value: items}
 }
 
 func UnmarshalPBList(intBuffer []byte, parser *Parser) (PBList, error) {
 	size := unmarshalBase128Int(intBuffer)
-	list := PBList{Value: make([]parseItem, size)}
+	list := PBList{Value: make([]ParseItem, size)}
 	for j := 0; j < size; j++ {
 		Value, err := parser.Step()
 		if err != nil {
@@ -84,7 +84,7 @@ func (item PBList) Marshal(writer io.Writer) error {
 
 // Reparse attempts to match the internal structure of a PBList
 // with a more fully defined object 
-func (item PBList) Reparse() parseItem {
+func (item PBList) Reparse() ParseItem {
 
 	// if you send us an empty list, you get back an empty list
 	if len(item.Value) == 0 {
@@ -108,7 +108,7 @@ func (item PBList) Reparse() parseItem {
 	return item
 }
 
-func parseVersionList(item PBList) parseItem {
+func parseVersionList(item PBList) ParseItem {
 
 	// PB_LIST(PB_VOCAB(Version),PB_INT(6))
 
@@ -120,7 +120,7 @@ func parseVersionList(item PBList) parseItem {
 	return PBVersionList{PBList: item, Version: intResult.Value}
 }
 
-func parseMessageList(item PBList) parseItem {
+func parseMessageList(item PBList) ParseItem {
 
 	// we expect a sequence number after PBVocab
 	// PB_LIST(PB_VOCAB(Message),PB_INT(1)...
@@ -151,7 +151,7 @@ func parseMessageList(item PBList) parseItem {
 	}
 
 	// now we expect a string identifying the message
-	stringResult, ok := item.Value[3].(PBInt)
+	stringResult, ok := item.Value[3].(PBString)
 	if !ok {
 		return item
 	}
@@ -162,7 +162,7 @@ func parseMessageList(item PBList) parseItem {
 
 }
 
-func parseAnswerList(item PBList) parseItem {
+func parseAnswerList(item PBList) ParseItem {
 	intResult, ok := item.Value[1].(PBInt)
 	if !ok {
 		return item

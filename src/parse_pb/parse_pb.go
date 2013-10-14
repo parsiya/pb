@@ -38,7 +38,7 @@ var (
 		PB_VOCAB:   "PB_VOCAB"}
 )
 
-type parseItem interface {
+type ParseItem interface {
 	String() string
 	Marshal(io.Writer) error
 }
@@ -52,7 +52,7 @@ func NewParser(reader io.Reader) (*Parser, error) {
 	return &parser, nil
 }
 
-func (parser *Parser) Step() (parseItem, error) {
+func (parser *Parser) Step() (ParseItem, error) {
 	var b byte
 	var intBuffer []byte
 	var c byte
