@@ -9,6 +9,7 @@ package main
 
 import (
    "parse_pb"
+   "fmt"
    "io"
    "log"
    "net"
@@ -49,6 +50,12 @@ func handleConnection(connection net.Conn) {
 // startState sends the initial greeting to the client and waits for the 
 // client's protocol choice
 func startState(state *State) stateFunction {
+
+	/* -----------------------------------------------------------------------
+	** PB_LIST(
+	**    PB_STRING("pb"),
+	**    PB_STRING("none"))
+	** ---------------------------------------------------------------------*/
 	pbString := parse_pb.NewPBString("pb")
 	noneString := parse_pb.NewPBString("none")
 	greeting := parse_pb.NewPBList(pbString, noneString)
@@ -56,6 +63,19 @@ func startState(state *State) stateFunction {
 	// send the initial greeting to the client
 	if err := greeting.Marshal(state.Connection); err != nil {
 		log.Fatalf("CRITICAL: greeting.Marshal %s %s", greeting.String(), err)
+	}
+
+	/* -----------------------------------------------------------------------
+	** PB_LIST(
+	**    PB_VOCAB(Version),
+	**    PB_INT(6))
+	** ---------------------------------------------------------------------*/
+	version := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabVersion),
+		parse_pb.NewPBInt(6))
+
+	// send the initial greeting to the client
+	if err := version.Marshal(state.Connection); err != nil {
+		log.Fatalf("CRITICAL: version.Marshal %s %s", version.String(), err)
 	}
 
 	// we expect the user to send the string 'pb'
@@ -111,70 +131,45 @@ func loginState(state *State) stateFunction {
 	rawRootRequest := result.Reparse()
 	rootRequest, ok := rawRootRequest.(parse_pb.PBObjectMessageList)
 	if !ok {
-		log.Printf("ERROR: (expecting version) %s", rawRootRequest)
+		log.Printf("ERROR: (expecting root request) %s", rawRootRequest)
 		return nil
 	}
 
-	/*------------------------------------------------------------------------
-	** we're expecting this:
-	** PB_LIST(
-	** 0 PB_VOCAB(Message),
-	** 1 PB_INT(1),
-	** 2 PB_STRING("root"),
-	** 3 PB_VOCAB(Login),
-	** 4 PB_INT(1),
-	** 5 PB_LIST(
-	**   0 PB_VOCAB(Tuple),
-	**   1 PB_LIST(
-	**     0 PB_STRING("unicode"),
-	**     1 PB_STRING("FunctionalTestUser1@1"))),
-	** 6 PB_LIST(
-	**   0 PB_VOCAB(Dictionary)))
-	** TODO: parse the whole thing
-	** XXX: need to handle the non unicode case
-	**-----------------------------------------------------------------------*/
-	var userString parse_pb.PBString
-
-	internalList, ok := rootRequest.PBList.Value[5].(parse_pb.PBList)
-	if !ok {
-		log.Printf("ERROR: (internal list) %s", rootRequest)
-		return nil
-	} 
-	// if we have a list, it's twisted unicode, if a string its the userid
-	switch internalItem := internalList.Value[1].(type) {
-	case parse_pb.PBList:
-		userString, ok = internalItem.Value[1].(parse_pb.PBString)
-		if !ok {
-			log.Printf("ERROR: (expecting userString) %s", internalItem)
-			return nil
-		}
-	case parse_pb.PBString:
-		userString = internalItem
-	default:
-		log.Printf("ERROR: unexpected type in root request %s %s", 
-			internalList, rootRequest)
-		return nil
-	}
-
-	log.Printf("DEBUG: userString = %s", string(userString.Value))
-	// we expect a string of the form <user-name>@<device-id>
-	splitName := strings.Split(string(userString.Value), "@")
-	if len(splitName) != 2 {
-		log.Printf("ERROR: Unparseable user name '%s'", userString)
-		return nil
-	}
-
-	deviceId, err := strconv.Atoi(splitName[1])
+	userName, deviceId, err := parseRootRequest(rootRequest)
 	if err != nil {
-		log.Printf("ERROR: Unparseable device-id '%s' %s", userString, err)
+		log.Printf("ERROR: error parsing root request %s", err)
 		return nil
 	}
-
-	state.UserName = splitName[0]
+	state.UserName = userName
 	state.Device = deviceId
 
-	log.Printf("DEBUG: %s", result)
-	return nil
+	answer := constructRootRequestAnswer()
+
+	// send challenge answer to the client
+	if err := answer.Marshal(state.Connection); err != nil {
+		log.Fatalf("CRITICAL: answer.Marshal %s %s", answer.String(), err)
+	}
+
+	// now we expect the user to send a response to the challenge
+	rawResponse, err := state.Parser.Step()
+	if err != nil {
+		log.Printf("ERROR: (expecting challenge response) %s", err)
+		return nil
+	}
+	responseList, ok := rawResponse.(parse_pb.PBList)
+	if !ok {
+		log.Printf("ERROR: (expecting response list) %s", rawResponse)
+	}
+	responseItem := responseList.Reparse()
+	response, ok := responseItem.(parse_pb.PBMessageList)
+	if !ok {
+		log.Printf("ERROR: (expecting challenge response) %s", responseItem)
+		return nil
+	}
+
+	// TODO: authenticate the response
+	log.Printf("DEBUG: response = %s", response)
+	return runState
 }
 
 // runState handles message traffic for a fully connected client
@@ -200,3 +195,90 @@ func runState(state *State) stateFunction {
 	return nil
 }
 
+func parseRootRequest(rootRequest parse_pb.PBObjectMessageList) (
+	string, int, error) {
+	var authName parse_pb.PBString
+
+	/*------------------------------------------------------------------------
+	** we're expecting this:
+	** PB_LIST(
+	** 0 PB_VOCAB(Message),
+	** 1 PB_INT(1),
+	** 2 PB_STRING("root"),
+	** 3 PB_VOCAB(Login),
+	** 4 PB_INT(1),
+	** 5 PB_LIST(
+	**   0 PB_VOCAB(Tuple),
+	**   1 PB_LIST(
+	**     0 PB_STRING("unicode"),
+	**     1 PB_STRING("FunctionalTestUser1@1"))),
+	** 6 PB_LIST(
+	**   0 PB_VOCAB(Dictionary)))
+	** TODO: parse the whole thing
+	** XXX: need to handle the non unicode case
+	**-----------------------------------------------------------------------*/
+
+	internalList, ok := rootRequest.PBList.Value[5].(parse_pb.PBList)
+	if !ok {
+		return "", 0, fmt.Errorf("can't cast internal list %s", rootRequest)
+	}
+
+	// if we have a list, it's twisted unicode, 
+	// if a string its the userid
+	switch internalItem := internalList.Value[1].(type) {
+	case parse_pb.PBList:
+		authName, ok = internalItem.Value[1].(parse_pb.PBString)
+		if !ok {
+			return "", 0, fmt.Errorf("can't cast expecting authName %s", 
+				internalItem)
+		}
+	case parse_pb.PBString:
+		authName = internalItem
+	default:
+		return "", 0, fmt.Errorf("unexpected type in root request %s %s", 
+			internalList, rootRequest)
+	}
+
+	// we expect a string of the form <user-name>@<device-id>
+	splitName := strings.Split(string(authName.Value), "@")
+	if len(splitName) != 2 {
+		return "", 0, fmt.Errorf("Unparseable authName '%s'", authName)
+	}
+
+	deviceId, err := strconv.Atoi(splitName[1])
+	if err != nil {
+		return "", 0, fmt.Errorf("Unparseable device-id '%s' %s", 
+			authName, err)
+	}
+
+	return splitName[0], deviceId, nil
+}
+
+func constructRootRequestAnswer() parse_pb.PBList {
+	/* ----------------------------------------------------------------------- 
+	** PB_LIST(
+	**     PB_VOCAB(Answer),
+	**     PB_INT(1),
+	**     PB_LIST(
+	**         PB_VOCAB(Tuple),
+	**         PB_STRING("N\x86\r\xaa\r\xf3\x99Q\xe1*\xfc\x06\x1d\xf3\xf8N"),
+	**         PB_LIST(
+	**             PB_VOCAB(Remote),
+	**             PB_INT(1))))
+	**---------------------------------------------------------------------*/
+	remote := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabRemote),
+		parse_pb.NewPBInt(1))
+
+	var challenge = []parse_pb.ParseItem{
+		parse_pb.NewPBVocab(parse_pb.VocabTuple),
+		parse_pb.NewPBString("N\x86\r\xaa\r\xf3\x99Q\xe1*\xfc\x06\x1d\xf3\xf8N"),
+		remote}
+
+	var dummyAnswer = []parse_pb.ParseItem{
+		parse_pb.NewPBVocab(parse_pb.VocabAnswer),
+		parse_pb.NewPBInt(1),
+		parse_pb.NewPBList(challenge...)}
+
+	// TODO: construct a real answer
+	return parse_pb.NewPBList(dummyAnswer...)
+}
