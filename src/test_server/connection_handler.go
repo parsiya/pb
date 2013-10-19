@@ -143,11 +143,12 @@ func loginState(state *State) stateFunction {
 	state.UserName = userName
 	state.Device = deviceId
 
-	answer := constructRootRequestAnswer()
+	rootRequestAnswer := constructRootRequestAnswer()
 
 	// send challenge answer to the client
-	if err := answer.Marshal(state.Connection); err != nil {
-		log.Fatalf("CRITICAL: answer.Marshal %s %s", answer.String(), err)
+	if err := rootRequestAnswer.Marshal(state.Connection); err != nil {
+		log.Fatalf("CRITICAL: answer.Marshal %s %s", 
+			rootRequestAnswer.String(), err)
 	}
 
 	// now we expect the user to send a response to the challenge
@@ -167,8 +168,20 @@ func loginState(state *State) stateFunction {
 		return nil
 	}
 
-	// TODO: authenticate the response
-	log.Printf("DEBUG: response = %s", response)
+	err = parseResponse(response)
+	if err != nil {
+		log.Printf("ERROR: error parsing response %s", err)
+		return nil
+	}
+
+	responseAnswer := constructResponseAnswer()
+
+	// send challenge answer to the client
+	if err := responseAnswer.Marshal(state.Connection); err != nil {
+		log.Fatalf("CRITICAL: answer.Marshal %s %s", 
+			responseAnswer.String(), err)
+	}
+
 	return runState
 }
 
@@ -281,4 +294,41 @@ func constructRootRequestAnswer() parse_pb.PBList {
 
 	// TODO: construct a real answer
 	return parse_pb.NewPBList(dummyAnswer...)
+}
+
+func parseResponse(_ parse_pb.PBMessageList) error {
+	/* -----------------------------------------------------------------------
+	** PB_LIST(
+	**     PB_VOCAB(Message),
+	**     PB_INT(2),
+	**     PB_INT(1),
+	**     PB_STRING("respond"),
+	**     PB_INT(1),
+	**     PB_LIST(
+	**         PB_VOCAB(Tuple),
+	**         PB_STRING("\xfd\x83NP\xb7\xa4\x02?\xafu\xb6\xe3\f<\xf1j"),
+	**         PB_LIST(
+	**             PB_VOCAB(Remote),
+	**             PB_INT(1))),
+	**     PB_LIST(
+	**         PB_VOCAB(Dictionary)))
+	** ---------------------------------------------------------------------*/
+
+	return nil
+}
+
+func constructResponseAnswer() parse_pb.PBList {
+	/* -----------------------------------------------------------------------
+	** PB_LIST(
+	**     PB_VOCAB(Answer),
+	**     PB_INT(2),
+	**     PB_LIST(
+	**         PB_VOCAB(Remote),
+	**         PB_INT(2)))
+	** ---------------------------------------------------------------------*/
+	remote := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabRemote),
+		parse_pb.NewPBInt(2))
+	answer := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabAnswer),
+		parse_pb.NewPBInt(2), remote)
+	return answer
 }
