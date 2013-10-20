@@ -188,22 +188,39 @@ func loginState(state *State) stateFunction {
 // runState handles message traffic for a fully connected client
 func runState(state *State) stateFunction {
 	for {
-		result, err := state.Parser.Step()
+		rawResult, err := state.Parser.Step()
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
 			log.Fatalf("CRITICAL: error on parser.Step %s", err)
 		}
-		switch result := result.(type) {
-		case parse_pb.PBString:
-			log.Printf("DEBUG: received PBString %s", result.String())
-			continue
-		case parse_pb.PBList:
-			log.Printf("DEBUG: received PBList %s", result.String())
+
+		// at this stage we only understand lists
+		resultList, ok := rawResult.(parse_pb.PBList)
+		if !ok {
+			log.Printf("ERROR: unknown type from client %s", 
+				resultList.String())
 			continue
 		}
-		log.Fatalf("CRITICAL: unexpected input from client %s", result.String())
+
+		result := resultList.Reparse()
+
+		switch result := result.(type) {
+		case parse_pb.PBMessageList:
+			if err := handleIncomingMessage(state, result); err != nil {
+				log.Printf("ERROR: error in incoming message %s %s", 
+					result.String(), err)
+			}
+			continue
+		case parse_pb.PBAnswerList:
+			if err := handleIncomingAnswer(state, result); err != nil {
+				log.Printf("ERROR: error in incoming answer %s %s", 
+					result.String(), err)
+			}
+			continue
+		}
+		log.Printf("ERROR: unhandled input from client %s", result.String())
 	}
 	return nil
 }
@@ -331,4 +348,33 @@ func constructResponseAnswer() parse_pb.PBList {
 	answer := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabAnswer),
 		parse_pb.NewPBInt(2), remote)
 	return answer
+}
+
+func handleIncomingMessage(state *State, message parse_pb.PBMessageList) error {
+	switch message.MessageName {
+	case "ping":
+		return sendPingReply(message.Sequence, state.Connection)
+	}
+	return fmt.Errorf("Unknown message from client %s", message)
+}
+
+func handleIncomingAnswer(state *State, message parse_pb.PBAnswerList) error {
+	return nil
+}
+
+func sendPingReply(sequence int, writer io.Writer) error {
+	/* -----------------------------------------------------------------------
+	** PB_LIST(
+	**     PB_VOCAB(Answer),
+	**     PB_INT(3),
+	**     PB_LIST(
+	**         PB_STRING("boolean"),
+	**         PB_STRING("true")))
+	** ---------------------------------------------------------------------*/
+	answer := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabAnswer),
+		parse_pb.NewPBInt(sequence),parse_pb.NewPBList(
+			parse_pb.NewPBString("boolean"), parse_pb.NewPBString("true")))
+
+	log.Printf("DEBUG: sendPingReply %s", answer)
+	return answer.Marshal(writer)
 }
