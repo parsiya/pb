@@ -351,7 +351,7 @@ func constructResponseAnswer() parse_pb.PBList {
 }
 
 func handleIncomingMessage(state *State, message parse_pb.PBMessageList) error {
-	switch message.MessageName {
+	switch message.Name {
 	case "ping":
 		return sendPingReply(message.Sequence, state.Connection)
 	}

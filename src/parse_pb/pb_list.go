@@ -19,19 +19,6 @@ type PBVersionList struct {
 	Version int
 }
 
-type PBObjectMessageList struct {
-	PBList
-	Sequence int
-	ObjectName string
-}
-
-type PBMessageList struct {
-	PBList
-	Sequence int
-	ObjectNumber int
-	MessageName string
-}
-
 type PBAnswerList struct {
 	PBList
 	Sequence int
@@ -118,48 +105,6 @@ func parseVersionList(item PBList) ParseItem {
 	}
 
 	return PBVersionList{PBList: item, Version: intResult.Value}
-}
-
-func parseMessageList(item PBList) ParseItem {
-
-	// we expect a sequence number after PBVocab
-	// PB_LIST(PB_VOCAB(Message),PB_INT(1)...
-	intResult, ok := item.Value[1].(PBInt)
-	if !ok {
-		return item
-	}
-	sequence := intResult.Value
-
-    // if the item after the Sequence is a PBString, we assume this is a request
-	// for a remote object reference
-	// PB_LIST(PB_VOCAB(Message),PB_INT(1),PB_STRING("root"),...
-
-	// otherwise, we expect an int, which is the index of the remote object 
-	// reference
-    // PB_LIST(PB_VOCAB(Message),PB_INT(2),PB_INT(1),PB_STRING("respond"),...
-
-	var objectNumber int
-
-	switch nextEntry := item.Value[2].(type) {
-	case PBString:
-		return PBObjectMessageList{PBList: item, Sequence: sequence,
-			ObjectName: string(nextEntry.Value)}
-	case PBInt:
-		objectNumber = nextEntry.Value
-	default:
-		return item
-	}
-
-	// now we expect a string identifying the message
-	stringResult, ok := item.Value[3].(PBString)
-	if !ok {
-		return item
-	}
-	messageName := string(stringResult.Value)
-
-	return PBMessageList{PBList: item, Sequence: sequence, 
-		ObjectNumber: objectNumber, MessageName: messageName}
-
 }
 
 func parseAnswerList(item PBList) ParseItem {
