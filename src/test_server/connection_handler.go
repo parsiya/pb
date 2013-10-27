@@ -9,6 +9,7 @@ package main
 
 import (
    "parse_pb"
+   "test_server/client_handler"
    "fmt"
    "io"
    "log"
@@ -17,11 +18,14 @@ import (
    "strconv"
 )
 
+const (
+	outgoingChanCapacity  = 100
+)
+
 type State struct {
 	Connection net.Conn
-	Parser * parse_pb.Parser
-	UserName string
-	Device int
+	Parser *parse_pb.Parser
+	ClientHandler client_handler.ClientHandler
 }
 
 // state function inspired by Rob Pike's video 'Lexical Scanning in Go'
@@ -38,7 +42,13 @@ func handleConnection(connection net.Conn) {
 		log.Fatalf("CRITICAL: parse_pb.NewParser failed %s", err)
 	}
 
-	state := State{Connection: connection, Parser: parser}
+	outgoingChan := make(chan interface{}, outgoingChanCapacity)
+
+	clientHandler := client_handler.New(outgoingChan)
+
+	state := State{Connection: connection, Parser: parser, 
+		ClientHandler: clientHandler}
+	defer state.ClientHandler.Close()
 
 	// main loop of state functions
 	for f := startState; f != nil; f = f(&state) {
@@ -140,8 +150,7 @@ func loginState(state *State) stateFunction {
 		log.Printf("ERROR: error parsing root request %s", err)
 		return nil
 	}
-	state.UserName = userName
-	state.Device = deviceId
+	state.ClientHandler.SetUserNameAndDeviceId(userName, deviceId)
 
 	rootRequestAnswer := constructRootRequestAnswer()
 
