@@ -167,19 +167,12 @@ func loginState(state *State) stateFunction {
 		return nil
 	}
 
-	err = parseResponse(response)
+	responseValue, err := parseResponse(response)
 	if err != nil {
 		log.Printf("ERROR: error parsing response %s", err)
 		return nil
 	}
-
-	responseAnswer := constructResponseAnswer()
-
-	// send challenge answer to the client
-	if err := responseAnswer.Marshal(state.Connection); err != nil {
-		log.Fatalf("CRITICAL: answer.Marshal %s %s", 
-			responseAnswer.String(), err)
-	}
+	state.ClientHandler.ReportChallengeResponse(responseValue)
 
 	return runState
 }
@@ -283,7 +276,7 @@ func parseRootRequest(rootRequest parse_pb.PBObjectMessageList) (
 	return splitName[0], deviceId, nil
 }
 
-func parseResponse(_ parse_pb.PBMessageList) error {
+func parseResponse(responseMessage parse_pb.PBMessageList) ([]byte, error) {
 	/* -----------------------------------------------------------------------
 	** PB_LIST(
 	**     PB_VOCAB(Message),
@@ -300,24 +293,18 @@ func parseResponse(_ parse_pb.PBMessageList) error {
 	**     PB_LIST(
 	**         PB_VOCAB(Dictionary)))
 	** ---------------------------------------------------------------------*/
+	if responseMessage.Name != "respond" {
+		return nil, fmt.Errorf("Invalid response message %s", responseMessage)
+	}
 
-	return nil
-}
+	responseArg := responseMessage.PositionalArgs.Value[0]
+	responseItem, ok := responseArg.(parse_pb.PBString)
+	if !ok {
+		return nil, fmt.Errorf("Invalid type from response message %s", 
+			responseMessage)
+	}
 
-func constructResponseAnswer() parse_pb.PBList {
-	/* -----------------------------------------------------------------------
-	** PB_LIST(
-	**     PB_VOCAB(Answer),
-	**     PB_INT(2),
-	**     PB_LIST(
-	**         PB_VOCAB(Remote),
-	**         PB_INT(2)))
-	** ---------------------------------------------------------------------*/
-	remote := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabRemote),
-		parse_pb.NewPBInt(2))
-	answer := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabAnswer),
-		parse_pb.NewPBInt(2), remote)
-	return answer
+	return responseItem.Value, nil
 }
 
 func handleIncomingMessage(state *State, message parse_pb.PBMessageList) error {

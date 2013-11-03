@@ -17,6 +17,7 @@ const (
 type ClientHandler interface {
 	Close()
 	SetUserNameAndDeviceId(userName string, deviceId int)
+	ReportChallengeResponse(responseValue []byte)
 }
 
 type clientHandler struct {
@@ -28,6 +29,10 @@ type clientHandler struct {
 type setUserNameAndDeviceIdRequest struct {
 	userName string
 	deviceId int
+}
+
+type reportChallengeResponse struct {
+	responseValue []byte
 }
 
 // create a new entity supporting the ClientHandler interface
@@ -51,6 +56,9 @@ func run(incoming <-chan interface{},
 				deviceId)
 			outputGenerator.IssueLoginChallenge(
 				"N\x86\r\xaa\r\xf3\x99Q\xe1*\xfc\x06\x1d\xf3\xf8N")
+		case reportChallengeResponse:
+			log.Printf("DEBUG: challenge response = %q", item.responseValue)
+			outputGenerator.AcceptChallengeResponse()
 		}
 	}
 }
@@ -62,4 +70,8 @@ func (handler *clientHandler) Close() {
 func (handler *clientHandler) SetUserNameAndDeviceId(userName string, 
 	deviceId int) {
 	handler.incoming <- setUserNameAndDeviceIdRequest{userName, deviceId}
+}
+
+func (handler *clientHandler) ReportChallengeResponse(responseValue []byte) {
+	handler.incoming <- reportChallengeResponse{responseValue}
 }

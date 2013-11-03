@@ -17,6 +17,7 @@ const (
 type OutputGenerator interface {
 	Close()
 	IssueLoginChallenge(challenge string)
+	AcceptChallengeResponse()
 }
 
 type outputGenerator struct {
@@ -26,6 +27,8 @@ type outputGenerator struct {
 type issueLoginChallenge struct {
 	challenge string
 }
+
+type acceptChallengeResponse struct {}
 
 // create a new entity supporting the OutputGenerator interface
 func New(writer io.Writer) OutputGenerator {
@@ -45,6 +48,14 @@ func run(outgoing <-chan interface{}, writer io.Writer) {
 				log.Fatalf("CRITICAL: loginChallenge.Marshal %s %s", 
 					loginChallenge.String(), err)
 				}
+		case acceptChallengeResponse:
+			log.Printf("DEBUG: acceptChallengeResponse")
+			acceptance := constructChallengeAcceptance()
+			
+			if err := acceptance.Marshal(writer); err != nil {
+				log.Fatalf("CRITICAL: acceptance.Marshal %s %s", 
+					acceptance.String(), err)
+				}
 
 		}
 	}
@@ -56,6 +67,10 @@ func (generator *outputGenerator) Close() {
 
 func (generator *outputGenerator) IssueLoginChallenge(challenge string) {
 	generator.outgoing <- issueLoginChallenge{challenge}
+}
+
+func (generator *outputGenerator) AcceptChallengeResponse() {
+	generator.outgoing <- acceptChallengeResponse{}
 }
 
 func constructLoginChallenge(challengeText string) parse_pb.PBList {
@@ -86,3 +101,20 @@ func constructLoginChallenge(challengeText string) parse_pb.PBList {
 	// TODO: construct a real answer
 	return parse_pb.NewPBList(dummyAnswer...)
 }
+
+func constructChallengeAcceptance() parse_pb.PBList {
+	/* -----------------------------------------------------------------------
+	** PB_LIST(
+	**     PB_VOCAB(Answer),
+	**     PB_INT(2),
+	**     PB_LIST(
+	**         PB_VOCAB(Remote),
+	**         PB_INT(2)))
+	** ---------------------------------------------------------------------*/
+	remote := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabRemote),
+		parse_pb.NewPBInt(2))
+	answer := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabAnswer),
+		parse_pb.NewPBInt(2), remote)
+	return answer
+}
+
