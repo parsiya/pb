@@ -5,18 +5,18 @@ server protocol.
 package client_handler
 
 import (
+   	"test_server/output_generator"
 	"log"
 )
 
 const (
 	incomingChanCapacity = 100
-	outgoingChanCapacity  = 100
 )
 
 // ClientHandler is the interface to the client handler
 type ClientHandler interface {
-	SetUserNameAndDeviceId(userName string, deviceId int)
 	Close()
+	SetUserNameAndDeviceId(userName string, deviceId int)
 }
 
 type clientHandler struct {
@@ -31,13 +31,14 @@ type setUserNameAndDeviceIdRequest struct {
 }
 
 // create a new entity supporting the ClientHandler interface
-func New(outgoingChan chan<- interface{}) ClientHandler {
+func New(outputGenerator output_generator.OutputGenerator) ClientHandler {
 	incomingChan := make(chan interface{}, incomingChanCapacity)
-	go run(incomingChan)
+	go run(incomingChan, outputGenerator)
 	return &clientHandler{incoming: incomingChan}
 }
 
-func run(incoming <-chan interface{}, outgoing chan<- interface{}) {
+func run(incoming <-chan interface{}, 
+	outputGenerator output_generator.OutputGenerator) {
 	var userName string
 	var deviceId int 
 			
@@ -48,16 +49,17 @@ func run(incoming <-chan interface{}, outgoing chan<- interface{}) {
 			deviceId = item.deviceId
 			log.Printf("DEBUG: userName = %s, deviceId = %d", userName, 
 				deviceId)
+			outputGenerator.IssueLoginChallenge(
+				"N\x86\r\xaa\r\xf3\x99Q\xe1*\xfc\x06\x1d\xf3\xf8N")
 		}
 	}
-}
-
-func (handler *clientHandler) SetUserNameAndDeviceId(userName string, 
-	deviceId int) {
-	handler.incoming <- setUserNameAndDeviceIdRequest{userName, deviceId}
 }
 
 func (handler *clientHandler) Close() {
 	close(handler.incoming)
 }
 
+func (handler *clientHandler) SetUserNameAndDeviceId(userName string, 
+	deviceId int) {
+	handler.incoming <- setUserNameAndDeviceIdRequest{userName, deviceId}
+}

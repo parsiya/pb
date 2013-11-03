@@ -9,6 +9,7 @@ package main
 
 import (
    "parse_pb"
+   "test_server/output_generator"
    "test_server/client_handler"
    "fmt"
    "io"
@@ -16,10 +17,6 @@ import (
    "net"
    "strings"
    "strconv"
-)
-
-const (
-	outgoingChanCapacity  = 100
 )
 
 type State struct {
@@ -42,9 +39,10 @@ func handleConnection(connection net.Conn) {
 		log.Fatalf("CRITICAL: parse_pb.NewParser failed %s", err)
 	}
 
-	outgoingChan := make(chan interface{}, outgoingChanCapacity)
+	outputGenerator := output_generator.New(connection)
+	defer outputGenerator.Close()
 
-	clientHandler := client_handler.New(outgoingChan)
+	clientHandler := client_handler.New(outputGenerator)
 
 	state := State{Connection: connection, Parser: parser, 
 		ClientHandler: clientHandler}
@@ -151,14 +149,6 @@ func loginState(state *State) stateFunction {
 		return nil
 	}
 	state.ClientHandler.SetUserNameAndDeviceId(userName, deviceId)
-
-	rootRequestAnswer := constructRootRequestAnswer()
-
-	// send challenge answer to the client
-	if err := rootRequestAnswer.Marshal(state.Connection); err != nil {
-		log.Fatalf("CRITICAL: answer.Marshal %s %s", 
-			rootRequestAnswer.String(), err)
-	}
 
 	// now we expect the user to send a response to the challenge
 	rawResponse, err := state.Parser.Step()
@@ -291,35 +281,6 @@ func parseRootRequest(rootRequest parse_pb.PBObjectMessageList) (
 	}
 
 	return splitName[0], deviceId, nil
-}
-
-func constructRootRequestAnswer() parse_pb.PBList {
-	/* ----------------------------------------------------------------------- 
-	** PB_LIST(
-	**     PB_VOCAB(Answer),
-	**     PB_INT(1),
-	**     PB_LIST(
-	**         PB_VOCAB(Tuple),
-	**         PB_STRING("N\x86\r\xaa\r\xf3\x99Q\xe1*\xfc\x06\x1d\xf3\xf8N"),
-	**         PB_LIST(
-	**             PB_VOCAB(Remote),
-	**             PB_INT(1))))
-	**---------------------------------------------------------------------*/
-	remote := parse_pb.NewPBList(parse_pb.NewPBVocab(parse_pb.VocabRemote),
-		parse_pb.NewPBInt(1))
-
-	var challenge = []parse_pb.ParseItem{
-		parse_pb.NewPBVocab(parse_pb.VocabTuple),
-		parse_pb.NewPBString("N\x86\r\xaa\r\xf3\x99Q\xe1*\xfc\x06\x1d\xf3\xf8N"),
-		remote}
-
-	var dummyAnswer = []parse_pb.ParseItem{
-		parse_pb.NewPBVocab(parse_pb.VocabAnswer),
-		parse_pb.NewPBInt(1),
-		parse_pb.NewPBList(challenge...)}
-
-	// TODO: construct a real answer
-	return parse_pb.NewPBList(dummyAnswer...)
 }
 
 func parseResponse(_ parse_pb.PBMessageList) error {
